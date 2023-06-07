@@ -62,27 +62,27 @@ func NewName(backend bind.ContractBackend, name string) (*Name, error) {
 	if err != nil {
 		return nil, err
 	}
-	controller, err := NewETHController(backend, domain)
-	if err != nil {
-		return nil, err
-	}
+	// controller, err := NewETHController(backend, domain)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	isValid, err := controller.IsValid(name)
-	if err != nil {
-		return nil, err
-	}
-	if !isValid {
-		return nil, errors.New("name is not valid according to the rules of the registrar (too short, invalid characters, etc.)")
-	}
+	// isValid, err := controller.IsValid(name)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// if !isValid {
+	// 	return nil, errors.New("name is not valid according to the rules of the registrar (too short, invalid characters, etc.)")
+	// }
 
 	return &Name{
-		backend:    backend,
-		Name:       name,
-		Domain:     domain,
-		Label:      label,
-		registry:   registry,
-		registrar:  registrar,
-		controller: controller,
+		backend:   backend,
+		Name:      name,
+		Domain:    domain,
+		Label:     label,
+		registry:  registry,
+		registrar: registrar,
+		// controller: controller,
 	}, nil
 }
 
@@ -305,10 +305,10 @@ func (n *Name) Address(coinType uint64) ([]byte, error) {
 
 // SetAddress sets the address of the name for a given coin type.
 // Coin types are defined at https://github.com/satoshilabs/slips/blob/master/slip-0044.md
-func (n *Name) SetAddress(coinType uint64, address []byte, opts *bind.TransactOpts) (*types.Transaction, error) {
-	resolver, err := NewResolver(n.backend, n.Name)
-	if err != nil {
-		return nil, err
-	}
-	return resolver.SetMultiAddress(opts, coinType, address)
-}
+// func (n *Name) SetAddress(coinType uint64, address []byte, opts *bind.TransactOpts) (*types.Transaction, error) {
+// 	resolver, err := NewResolver(n.backend, n.Name)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	return resolver.SetMultiAddress(opts, coinType, address)
+// }

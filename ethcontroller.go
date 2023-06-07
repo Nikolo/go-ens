@@ -35,24 +35,24 @@ type ETHController struct {
 }
 
 // NewETHController creates a new controller for a given domain
-func NewETHController(backend bind.ContractBackend, domain string) (*ETHController, error) {
-	registry, err := NewRegistry(backend)
-	if err != nil {
-		return nil, err
-	}
-	resolver, err := registry.Resolver(domain)
-	if err != nil {
-		return nil, err
-	}
+// func NewETHController(backend bind.ContractBackend, domain string) (*ETHController, error) {
+// 	registry, err := NewRegistry(backend)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	resolver, err := registry.Resolver(domain)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	// Obtain the controller from the resolver
-	controllerAddress, err := resolver.InterfaceImplementer([4]byte{0x01, 0x8f, 0xac, 0x06})
-	if err != nil {
-		return nil, err
-	}
+// 	// Obtain the controller from the resolver
+// 	controllerAddress, err := resolver.InterfaceImplementer([4]byte{0x01, 0x8f, 0xac, 0x06})
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	return NewETHControllerAt(backend, domain, controllerAddress)
-}
+// 	return NewETHControllerAt(backend, domain, controllerAddress)
+// }
 
 // NewETHControllerAt creates a .eth controller at a given address
 func NewETHControllerAt(backend bind.ContractBackend, domain string, address common.Address) (*ETHController, error) {

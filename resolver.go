@@ -23,9 +23,11 @@ import (
 	"math/big"
 	"strings"
 
+	accountAbi "github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	dnsname "github.com/petejkim/ens-dnsname"
 	"github.com/wealdtech/go-ens/v3/contracts/resolver"
 )
 
@@ -39,6 +41,14 @@ type Resolver struct {
 	Contract     *resolver.Contract
 	ContractAddr common.Address
 	domain       string
+}
+
+func CreateResolver(c *resolver.Contract, addr common.Address, d string) *Resolver {
+	return &Resolver{
+		Contract:     c,
+		ContractAddr: addr,
+		domain:       d,
+	}
 }
 
 // NewResolver obtains an ENS resolver for a given domain
@@ -106,14 +116,51 @@ func (r *Resolver) Address() (common.Address, error) {
 	return r.Contract.Addr(nil, nameHash)
 }
 
-// SetAddress sets the Ethereum address of the domain
-func (r *Resolver) SetAddress(opts *bind.TransactOpts, address common.Address) (*types.Transaction, error) {
+// Address returns the Ethereum address of the domain
+func (r *Resolver) Resolve(coinType uint64) (common.Address, error) {
 	nameHash, err := NameHash(r.domain)
 	if err != nil {
-		return nil, err
+		return UnknownAddress, err
 	}
-	return r.Contract.SetAddr(opts, nameHash, address)
+
+	abi, err := resolver.ContractMetaData.GetAbi()
+	if err != nil {
+		return UnknownAddress, err
+	}
+
+	data, err := abi.Pack("addr0", nameHash, big.NewInt(int64(coinType)))
+	if err != nil {
+		return UnknownAddress, err
+	}
+
+	dnsencodedData, err := dnsname.Encode(r.domain)
+	if err != nil {
+		return UnknownAddress, err
+	}
+
+	ret, err := r.Contract.Resolve(nil, dnsencodedData, data)
+	if err != nil {
+		return UnknownAddress, err
+	}
+
+	out, err := abi.Unpack("addr0", ret)
+	if err != nil {
+		return UnknownAddress, err
+	}
+
+	out0 := *accountAbi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, nil
 }
+
+// SetAddress sets the Ethereum address of the domain
+// func (r *Resolver) SetAddress(opts *bind.TransactOpts, address common.Address) (*types.Transaction, error) {
+// 	nameHash, err := NameHash(r.domain)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	return r.Contract.SetAddr(opts, nameHash, address)
+// }
 
 // MultiAddress returns the address of the domain for a given coin type.
 // The coin type is as per https://github.com/satoshilabs/slips/blob/master/slip-0044.md
@@ -127,13 +174,13 @@ func (r *Resolver) MultiAddress(coinType uint64) ([]byte, error) {
 
 // SetMultiAddress sets the iaddress of the domain for a given coin type.
 // The coin type is as per https://github.com/satoshilabs/slips/blob/master/slip-0044.md
-func (r *Resolver) SetMultiAddress(opts *bind.TransactOpts, coinType uint64, address []byte) (*types.Transaction, error) {
-	nameHash, err := NameHash(r.domain)
-	if err != nil {
-		return nil, err
-	}
-	return r.Contract.SetAddr0(opts, nameHash, big.NewInt(int64(coinType)), address)
-}
+// func (r *Resolver) SetMultiAddress(opts *bind.TransactOpts, coinType uint64, address []byte) (*types.Transaction, error) {
+// 	nameHash, err := NameHash(r.domain)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	return r.Contract.SetAddr0(opts, nameHash, big.NewInt(int64(coinType)), address)
+// }
 
 // PubKey returns the public key of the domain
 func (r *Resolver) PubKey() ([32]byte, [32]byte, error) {
@@ -173,13 +220,13 @@ func (r *Resolver) SetContenthash(opts *bind.TransactOpts, contenthash []byte) (
 }
 
 // InterfaceImplementer returns the address of the contract that implements the given interface for the given domain
-func (r *Resolver) InterfaceImplementer(interfaceID [4]byte) (common.Address, error) {
-	nameHash, err := NameHash(r.domain)
-	if err != nil {
-		return UnknownAddress, err
-	}
-	return r.Contract.InterfaceImplementer(nil, nameHash, interfaceID)
-}
+// func (r *Resolver) InterfaceImplementer(interfaceID [4]byte) (common.Address, error) {
+// 	nameHash, err := NameHash(r.domain)
+// 	if err != nil {
+// 		return UnknownAddress, err
+// 	}
+// 	return r.Contract.InterfaceImplementer(nil, nameHash, interfaceID)
+// }
 
 // Resolve resolves an ENS name in to an Etheruem address
 // This will return an error if the name is not found or otherwise 0
